@@ -1,4 +1,5 @@
 import 'package:films/src/providers/films.provider.dart';
+import 'package:films/src/widgets/movie_horizontal.widget.dart';
 import 'package:flutter/material.dart';
 import 'package:films/src/widgets/card_swiper.widget.dart';
 
@@ -56,18 +57,28 @@ class HomePage extends StatelessWidget {
     return Container(
       width: double.infinity,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'En Taquilla',
-            style: Theme.of(context).textTheme.subtitle1,
+          Container(
+            padding: EdgeInsets.only(left: 20.0),
+            child: Text(
+              'En Taquilla',
+              style: Theme.of(context).textTheme.subtitle1,
+            ),
           ),
-          // FutureBuilder(
-          //   future: Future,
-          //   initialData: InitialData,
-          //   builder: (BuildContext context, AsyncSnapshot snapshot) {
-          //     return ;
-          //   },
-          // ),
+          SizedBox(
+            height: 5.0,
+          ),
+          FutureBuilder(
+            future: filmsProvider.getPopular(),
+            // initialData: InitialData,
+            builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
+              if (snapshot.hasData) {
+                return MovieHorizontal(films: snapshot.data);
+              }
+              return Center(child: CircularProgressIndicator());
+            },
+          ),
         ],
       ),
     );

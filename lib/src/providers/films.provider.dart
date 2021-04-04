@@ -12,15 +12,29 @@ class FilmsProvider {
   final String _apiVersion = '3';
   final String _page = '1';
 
+  Future<List<Film>> _processResponse(Uri url) async {
+    final response = await $http.get(url);
+    final decodedData = json.decode(response.body);
+    final films = Films.fromJsonList(decodedData['results']);
+    return films.items;
+  }
+
   Future<List<Film>> getInCinemas() async {
     final url = Uri.https(
       _url,
       '$_apiVersion/movie/now_playing',
       {'api_key': _apiKey, 'language': _language, 'page': _page},
     );
-    final response = await $http.get(url);
-    final decodedData = json.decode(response.body);
-    final films = Films.fromJsonList(decodedData['results']);
-    return films.items;
+    return await _processResponse(url);
+  }
+
+  Future<List<Film>> getPopular() async {
+    final url = Uri.https(
+      _url,
+      '$_apiVersion/movie/popular',
+      {'api_key': _apiKey, 'language': _language, 'page': _page},
+    );
+
+    return await _processResponse(url);
   }
 }
