@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -10,7 +11,21 @@ class FilmsProvider {
   final String _url = 'api.themoviedb.org';
   final String _language = 'es-ES';
   final String _apiVersion = '3';
-  final String _page = '1';
+
+  int _popularesPage = 1;
+  bool _cargando = false;
+
+  final List<Film> _populates = [];
+
+  final _populatesStreamCtrl = StreamController<List<Film>>.broadcast();
+
+  Function(List<Film>) get populatesSink => _populatesStreamCtrl.sink.add;
+
+  Stream<List<Film>> get populatesStream => _populatesStreamCtrl.stream;
+
+  void disposeStreams() {
+    _populatesStreamCtrl?.close();
+  }
 
   Future<List<Film>> _processResponse(Uri url) async {
     final response = await $http.get(url);
@@ -23,18 +38,39 @@ class FilmsProvider {
     final url = Uri.https(
       _url,
       '$_apiVersion/movie/now_playing',
-      {'api_key': _apiKey, 'language': _language, 'page': _page},
+      {
+        'api_key': _apiKey,
+        'language': _language,
+        'page': _popularesPage.toString()
+      },
     );
     return await _processResponse(url);
   }
 
   Future<List<Film>> getPopular() async {
+    // esto es una optimización, porque si no, estaría cargando todo el rato
+    if (_cargando) return [];
+
+    _cargando = true;
+
+    _popularesPage++;
+
     final url = Uri.https(
       _url,
       '$_apiVersion/movie/popular',
-      {'api_key': _apiKey, 'language': _language, 'page': _page},
+      {
+        'api_key': _apiKey,
+        'language': _language,
+        'page': _popularesPage.toString(),
+      },
     );
 
-    return await _processResponse(url);
+    final resp = await _processResponse(url);
+
+    _populates.addAll(resp);
+    populatesSink(_populates);
+    _cargando = false;
+
+    return resp;
   }
 }
